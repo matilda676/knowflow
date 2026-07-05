@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>KnowFlow · 收藏详情</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#fbf6f1;
+    --bg-soft:#f3ece2;
+    --card:#ffffff;
+    --ink:#231815;
+    --ink-soft:#6b5d57;
+    --ink-faint:#a59a93;
+    --line:#ece2d3;
+    --line-soft:#f3ece2;
+    --primary:#ff5a3c;
+    --primary-soft:#ffe2d9;
+    --primary-ink:#c8341a;
+    --green:#3aa97a;
+    --green-soft:#e3f4ec;
+    --shadow:0 8px 30px rgba(60,30,20,.06);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+  .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  .sidebar{
+    background:linear-gradient(180deg,#fff 0%,#fff7f1 100%);
+    border-right:1px solid var(--line);
+    padding:24px 18px;position:sticky;top:0;height:100vh;
+    display:flex;flex-direction:column;gap:18px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 6px}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff7a4d,#ff4d2e);display:grid;place-items:center;color:#fff;font-weight:700;box-shadow:0 6px 16px rgba(255,90,60,.35)}
+  .brand .name{font-size:16px;font-weight:700;letter-spacing:.3px}
+  .brand .tag{font-size:11px;color:var(--ink-faint)}
+
+  .nav-section .label{font-size:11px;color:var(--ink-faint);padding:10px 8px 6px;letter-spacing:.5px}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 10px;border-radius:10px;color:var(--ink-soft);
+    font-size:13.5px;cursor:pointer;transition:.15s;
+  }
+  .nav-item:hover{background:var(--bg-soft);color:var(--ink)}
+  .nav-item.active{background:linear-gradient(135deg,#fff1ec,#ffe2d9);color:var(--primary-ink);font-weight:600}
+  .nav-item .icon{width:18px;height:18px;display:grid;place-items:center}
+  .nav-item .badge{margin-left:auto;font-size:11px;background:#fff;border:1px solid var(--line);padding:2px 7px;border-radius:999px;color:var(--ink-soft)}
+
+  .kb-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:auto}
+  .kb-card .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .kb-card .row .k{font-size:12px;color:var(--ink-soft)}
+  .kb-card .row .v{font-size:13px;font-weight:600}
+  .kb-card .hint{font-size:11.5px;color:var(--ink-faint);margin-top:6px}
+
+  /* 主体 */
+  .main{padding:28px 36px 60px;max-width:780px;width:100%;margin:0 auto}
+
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-faint);margin-bottom:14px}
+  .crumbs a{color:var(--ink-soft);cursor:pointer}
+  .crumbs a:hover{color:var(--primary-ink)}
+  .crumbs .sep{color:var(--ink-faint)}
+
+  /* 头部 */
+  .head-card{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px;margin-bottom:18px;
+  }
+  .head-card .cat-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .head-card .cat{
+    font-size:11.5px;background:linear-gradient(135deg,#fff1ec,#ffe2d9);color:var(--primary-ink);
+    padding:4px 10px;border-radius:99px;font-weight:600;letter-spacing:.3px;
+  }
+  .head-card .src{font-size:11.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+  .head-card .src .xhs{
+    width:18px;height:18px;border-radius:5px;background:linear-gradient(135deg,#ff5a3c,#ffb86b);
+    color:#fff;display:grid;place-items:center;font-size:10px;font-weight:700;
+  }
+  .head-card h1{font-size:22px;font-weight:700;line-height:1.45;margin-bottom:14px}
+  .head-card .meta-row{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--ink-soft);align-items:center}
+  .head-card .meta-row .item{display:flex;align-items:center;gap:5px}
+  .head-card .meta-row .item b{color:var(--ink);font-weight:600}
+
+  /* 本地摘要 */
+  .ai-sum{
+    background:linear-gradient(135deg,#fff7f2,#fff);border:1px solid #ffd0c2;border-radius:14px;
+    padding:16px 18px;margin-bottom:18px;position:relative;overflow:hidden;
+  }
+  .ai-sum::before{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(255,90,60,.15),transparent 70%);border-radius:50%}
+  .ai-sum .head{display:flex;align-items:center;gap:10px;margin-bottom:10px;position:relative}
+  .ai-sum .ai{background:linear-gradient(135deg,#ff7a4d,#ff4d2e);color:#fff;padding:4px 10px;border-radius:99px;font-size:11px;letter-spacing:.5px;display:flex;align-items:center;gap:4px}
+  .ai-sum .title{font-size:13.5px;font-weight:700}
+  .ai-sum p{font-size:13px;color:var(--ink-soft);line-height:1.7;position:relative;margin-bottom:10px}
+  .ai-sum p:last-child{margin-bottom:0}
+  .ai-sum p b{color:var(--ink);background:linear-gradient(transparent 60%,rgba(255,184,107,.4) 60%);padding:0 2px}
+  .ai-sum .points{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;position:relative}
+  .ai-sum .pt{
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+  }
+  .ai-sum .pt .n{font-size:11px;color:var(--primary-ink);font-weight:700;letter-spacing:.5px}
+  .ai-sum .pt .t{font-size:12px;color:var(--ink);font-weight:600;margin:2px 0 1px}
+  .ai-sum .pt .d{font-size:11px;color:var(--ink-soft);line-height:1.5}
+
+  /* 工具条 */
+  .tool-row{
+    display:flex;align-items:center;gap:8px;
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;
+    box-shadow:var(--shadow);margin-bottom:18px;flex-wrap:wrap;
+  }
+  .tool-row .b{
+    padding:6px 10px;font-size:12.5px;border-radius:8px;color:var(--ink-soft);
+    display:flex;align-items:center;gap:5px;cursor:pointer;transition:.15s;
+  }
+  .tool-row .b:hover{background:var(--bg-soft);color:var(--ink)}
+  .tool-row .b.primary{background:linear-gradient(135deg,#fff1ec,#ffe2d9);color:var(--primary-ink);font-weight:600}
+  .tool-row .right{margin-left:auto;font-size:11.5px;color:var(--ink-faint)}
+
+  /* 正文 */
+  .article{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px}
+  .article p{font-size:14.5px;color:var(--ink);line-height:1.85;margin-bottom:14px}
+  .article p:last-child{margin-bottom:0}
+  .article h3{font-size:16px;font-weight:700;margin:24px 0 12px;color:var(--ink)}
+  .article h3:first-child{margin-top:0}
+  .article .img-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:18px 0}
+  .article .img-grid .img{
+    aspect-ratio:4/3;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:11px;letter-spacing:.5px;
+  }
+  .article .img-grid .img:nth-child(1){background:linear-gradient(135deg,#ffb86b,#ff5a3c)}
+  .article .img-grid .img:nth-child(2){background:linear-gradient(135deg,#ffd0a0,#ff8a5a)}
+  .article .img-grid .img:nth-child(3){background:linear-gradient(135deg,#fbe5d6,#e8a988)}
+  .article .img-grid .img:nth-child(4){background:linear-gradient(135deg,#fff0d6,#e0a878);color:#a87500}
+  .article blockquote{
+    border-left:3px solid var(--primary);background:#fff7f2;
+    padding:10px 14px;border-radius:0 8px 8px 0;color:var(--ink-soft);font-size:13.5px;margin:14px 0;
+  }
+  .article blockquote b{color:var(--ink)}
+
+  @media (max-width:760px){
+    html,body{font-size:14px}
+    .app{display:block;min-height:100vh}
+    .sidebar{
+      position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);
+      padding:14px 12px;gap:10px;
+    }
+    .brand{padding:0 4px}
+    .nav-section .label{display:none}
+    .nav-section{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+    .nav-section::-webkit-scrollbar{display:none}
+    .nav-item{flex:0 0 auto;padding:8px 10px;white-space:nowrap}
+    .nav-item .badge{margin-left:6px}
+    #sidebarCategories{display:flex;gap:8px}
+    .kb-card{display:none}
+    .main{max-width:none;padding:16px 12px 36px}
+    .crumbs{overflow-x:auto;white-space:nowrap}
+    .head-card{padding:18px;border-radius:14px}
+    .head-card h1{font-size:22px}
+    .ai-sum{padding:14px;border-radius:14px}
+    .ai-sum .points{grid-template-columns:1fr}
+    .tool-row{padding:10px}
+    .tool-row .right{width:100%;margin-left:0}
+    .article{padding:18px;border-radius:14px}
+    .article p{font-size:15px;line-height:1.8}
+    .article .img-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">K</div>
+      <div>
+        <div class="name">KnowFlow</div>
+        <div class="tag">个人知识 Copilot</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">主导航</div>
+      <a class="nav-item" href="chat.html"><span class="icon">💬</span>AI 聊天</a>
+      <a class="nav-item" href="import.html"><span class="icon">⬆️</span>导入新内容</a>
+      <a class="nav-item active" href="library.html"><span class="icon">📚</span>知识库 <span id="navTotal" class="badge">--</span></a>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">分类</div>
+      <div id="sidebarCategories">
+        <div class="nav-item"><span class="icon">📁</span>全部 <span class="badge">--</span></div>
+      </div>
+    </div>
+
+    <div class="kb-card">
+      <div class="row"><span class="k">知识库</span><span id="kbTotal" class="v">-- 篇</span></div>
+      <div class="row"><span class="k">分类数</span><span id="kbCategories" class="v">--</span></div>
+      <div class="hint">以本地数据库为准</div>
+    </div>
+  </aside>
+
+  <!-- 主体 -->
+  <main class="main">
+    <div class="crumbs">
+      <a href="chat.html">首页</a><span class="sep">/</span>
+      <a href="library.html">知识库</a><span class="sep">/</span>
+      <a id="crumbCategory">分类</a><span class="sep">/</span>
+      <span id="crumbTitle">详情</span>
+    </div>
+
+    <!-- 头部 -->
+    <div class="head-card">
+      <div class="cat-row">
+        <span id="detailCategory" class="cat">分类</span>
+        <span class="src"><span class="xhs">本</span>来自本地导入</span>
+      </div>
+      <h1 id="detailTitle">正在读取笔记...</h1>
+      <div class="meta-row">
+        <div class="item">📅 <b>导入于</b> <span id="detailCreated">--</span></div>
+        <div class="item">📝 <b>正文</b> <span id="detailLength">0 字</span></div>
+        <div class="item">🧩 <b id="detailChunks">0 个片段</b></div>
+      </div>
+    </div>
+
+    <!-- 本地摘要 -->
+    <div class="ai-sum">
+      <div class="head">
+        <span class="ai">✨ 本地摘要</span>
+        <span id="summaryTitle" class="title">本地摘要</span>
+      </div>
+      <p id="detailSummary">正在读取摘要...</p>
+    </div>
+
+    <!-- 工具条 -->
+    <div class="tool-row">
+      <a class="b primary" href="chat.html">💬 引用到 AI 聊天</a>
+      <div class="b">📤 分享</div>
+      <div class="b">📑 导出</div>
+      <div class="b">🗑️ 删除</div>
+      <div id="detailSource" class="right">本地知识库</div>
+    </div>
+
+    <!-- 正文 -->
+    <article id="detailArticle" class="article">
+      <p>正在读取正文...</p>
+    </article>
+  </main>
+</div>
+<script src="knowflow-static.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const noteId = params.get("note_id") || "1";
+
+  function escapeHTML(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function categoryIcon(category) {
+    const map = {"美食": "🍜", "旅行": "✈️", "旅游": "✈️", "学习": "📖", "护肤": "💄", "家居": "🏠", "产品 · 增长": "💼", "未分类": "📄"};
+    return map[category] || "📄";
+  }
+
+  function renderBody(note) {
+    const paragraphs = (note.body || "").split(/\n\s*\n/).filter(Boolean);
+    const bodyHTML = paragraphs.map((para) => `<p>${escapeHTML(para).replaceAll("\n", "<br>")}</p>`).join("");
+    return `
+      <h3>原文</h3>
+      ${bodyHTML || "<p>暂无正文</p>"}
+    `;
+  }
+
+  function renderSidebarStats(notes) {
+    const counts = notes.reduce((acc, note) => {
+      const category = note.category || "未分类";
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+    const total = notes.length;
+    document.querySelector("#navTotal").textContent = total;
+    document.querySelector("#kbTotal").textContent = `${total} 篇`;
+    document.querySelector("#kbCategories").textContent = Object.keys(counts).length;
+    document.querySelector("#sidebarCategories").innerHTML = [
+      `<div class="nav-item"><span class="icon">📁</span>全部 <span class="badge">${total}</span></div>`,
+      ...Object.entries(counts).map(([category, count]) => `
+        <div class="nav-item"><span class="icon">${categoryIcon(category)}</span>${escapeHTML(category)} <span class="badge">${count}</span></div>
+      `)
+    ].join("");
+  }
+
+  async function loadSidebarStats() {
+    try {
+      renderSidebarStats(KnowFlowStore.listNotes());
+    } catch (error) {}
+  }
+
+  async function loadDetail() {
+    try {
+      const note = KnowFlowStore.getNote(noteId);
+      if (!note) throw new Error("没有找到这篇笔记");
+      const category = note.category || "未分类";
+
+      document.querySelector("#crumbCategory").textContent = category;
+      document.querySelector("#crumbTitle").textContent = note.title;
+      document.querySelector("#detailCategory").textContent = `${categoryIcon(category)} ${category}`;
+      document.querySelector("#detailTitle").textContent = note.title;
+      document.querySelector("#detailCreated").textContent = new Date(note.created_at).toLocaleString("zh-CN");
+      document.querySelector("#detailLength").textContent = `${(note.body || "").length} 字`;
+      document.querySelector("#detailChunks").textContent = "已建立检索";
+      document.querySelector("#summaryTitle").textContent = "按原文提炼";
+      document.querySelector("#detailSummary").textContent = note.summary || "暂无摘要";
+      document.querySelector("#detailSource").textContent = "本地知识库";
+      document.querySelector("#detailArticle").innerHTML = renderBody(note);
+    } catch (error) {
+      document.querySelector("#detailTitle").textContent = "读取失败";
+      document.querySelector("#detailSummary").textContent = error.message || "请确认后端服务已启动";
+      document.querySelector("#detailArticle").innerHTML = `<p>${escapeHTML(error.message || "读取失败")}</p>`;
+    }
+  }
+
+  loadSidebarStats();
+  loadDetail();
+</script>
+</body>
+</html>

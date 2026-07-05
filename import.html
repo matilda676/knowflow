@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>KnowFlow · 导入</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#fbf6f1;
+    --bg-soft:#f3ece2;
+    --card:#ffffff;
+    --ink:#231815;
+    --ink-soft:#6b5d57;
+    --ink-faint:#a59a93;
+    --line:#ece2d3;
+    --line-soft:#f3ece2;
+    --primary:#ff5a3c;
+    --primary-soft:#ffe2d9;
+    --primary-ink:#c8341a;
+    --accent:#ffb86b;
+    --green:#3aa97a;
+    --green-soft:#e3f4ec;
+    --shadow:0 8px 30px rgba(60,30,20,.06);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  input,textarea,select{font-family:inherit;color:inherit}
+
+  .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  .sidebar{
+    background:linear-gradient(180deg,#fff 0%,#fff7f1 100%);
+    border-right:1px solid var(--line);
+    padding:24px 18px;
+    position:sticky;top:0;height:100vh;
+    display:flex;flex-direction:column;gap:18px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 6px}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff7a4d,#ff4d2e);display:grid;place-items:center;color:#fff;font-weight:700;box-shadow:0 6px 16px rgba(255,90,60,.35)}
+  .brand .name{font-size:16px;font-weight:700;letter-spacing:.3px}
+  .brand .tag{font-size:11px;color:var(--ink-faint)}
+
+  .nav-section .label{font-size:11px;color:var(--ink-faint);padding:10px 8px 6px;letter-spacing:.5px}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 10px;border-radius:10px;color:var(--ink-soft);
+    font-size:13.5px;cursor:pointer;transition:.15s;
+  }
+  .nav-item:hover{background:var(--bg-soft);color:var(--ink)}
+  .nav-item.active{background:linear-gradient(135deg,#fff1ec,#ffe2d9);color:var(--primary-ink);font-weight:600}
+  .nav-item .icon{width:18px;height:18px;display:grid;place-items:center}
+  .nav-item .badge{margin-left:auto;font-size:11px;background:#fff;border:1px solid var(--line);padding:2px 7px;border-radius:999px;color:var(--ink-soft)}
+
+  .kb-card{
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:auto;
+  }
+  .kb-card .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .kb-card .row .k{font-size:12px;color:var(--ink-soft)}
+  .kb-card .row .v{font-size:13px;font-weight:600}
+  .kb-card .hint{font-size:11.5px;color:var(--ink-faint);margin-top:6px}
+
+  /* 主体 */
+  .main{padding:28px 36px 60px;max-width:920px;width:100%;margin:0 auto}
+  .page-head{margin-bottom:18px}
+  .crumbs{font-size:12px;color:var(--ink-faint);margin-bottom:8px}
+  .crumbs span{color:var(--ink-soft)}
+  .title{font-size:24px;font-weight:700;letter-spacing:.3px}
+  .subtitle{color:var(--ink-soft);font-size:13px;margin-top:6px}
+
+  /* 通道切换 */
+  .switch{
+    display:flex;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;width:fit-content;
+    margin-bottom:18px;box-shadow:var(--shadow);
+  }
+  .switch .s{
+    padding:9px 18px;border-radius:10px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;
+    display:flex;align-items:center;gap:6px;
+  }
+  .switch .s.active{background:linear-gradient(135deg,#fff1ec,#ffe2d9);color:var(--primary-ink);font-weight:600}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin-bottom:18px}
+  .card h3{font-size:15px;font-weight:700;margin-bottom:4px}
+  .card .desc{color:var(--ink-soft);font-size:12.5px;margin-bottom:16px}
+
+  .label-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .label-row .lbl{font-size:12.5px;color:var(--ink-soft)}
+  .label-row .hint{font-size:11.5px;color:var(--ink-faint)}
+  .input,.textarea{
+    width:100%;border:1.5px solid var(--line);background:#fff;border-radius:12px;
+    padding:12px 14px;font-size:13.5px;outline:none;transition:.15s;
+  }
+  .input:focus,.textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,90,60,.12)}
+  .textarea{min-height:200px;resize:vertical;line-height:1.65}
+
+  .parse-state{
+    display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;
+    background:var(--green-soft);color:#1d7a4d;font-size:12.5px;margin-top:12px;
+  }
+  .parse-state .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .parse-state.info{background:#fff7f2;color:var(--primary-ink)}
+  .parse-state.info .dot{background:var(--primary)}
+  .parse-state.error{background:#fff1ef;color:#b42318}
+  .parse-state.error .dot{background:#d92d20}
+
+  .classify{
+    margin-top:16px;padding:16px;border:1.5px dashed #ffd0c2;border-radius:14px;background:linear-gradient(180deg,#fff7f2,#fff);
+  }
+  .classify .head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .classify .head .ai{background:linear-gradient(135deg,#ff7a4d,#ff4d2e);color:#fff;padding:4px 10px;border-radius:99px;font-size:11px;letter-spacing:.5px}
+  .classify .head h4{font-size:14px;font-weight:700}
+  .classify .head .sub{font-size:12px;color:var(--ink-soft);margin-left:auto}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    padding:8px 14px;border-radius:99px;border:1.5px solid var(--line);background:#fff;
+    font-size:13px;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s;
+  }
+  .chip:hover{border-color:#ffd0c2}
+  .chip.recommend{background:linear-gradient(135deg,#fff1ec,#ffe2d9);color:var(--primary-ink);border-color:#ffc1ad;font-weight:600}
+  .chip.recommend::before{content:"✨"}
+  .chip .remove{font-size:12px;color:var(--ink-faint);line-height:1;margin-left:2px}
+  .chip .remove:hover{color:var(--primary-ink)}
+  .chip.new{border-style:dashed;color:var(--ink-soft)}
+  .chip-input{
+    width:132px;padding:8px 12px;border-radius:99px;border:1.5px dashed #ffd0c2;
+    background:#fff;font-size:13px;outline:none;color:var(--ink);
+  }
+  .chip-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,90,60,.12)}
+
+  .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+  .btn{padding:11px 20px;border-radius:12px;font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+  .btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+  .btn.ghost:hover{border-color:#ffc1ad;color:var(--ink)}
+  .btn.primary{background:linear-gradient(135deg,#ff7a4d,#ff4d2e);color:#fff;box-shadow:0 8px 18px rgba(255,90,60,.3)}
+  .btn.primary:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(255,90,60,.4)}
+  .btn:disabled{opacity:.58;cursor:not-allowed;transform:none!important}
+
+  @media (max-width:760px){
+    html,body{font-size:14px}
+    .app{display:block;min-height:100vh}
+    .sidebar{
+      position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);
+      padding:14px 12px;gap:10px;
+    }
+    .brand{padding:0 4px}
+    .nav-section .label{display:none}
+    .nav-section{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+    .nav-section::-webkit-scrollbar{display:none}
+    .nav-item{flex:0 0 auto;padding:8px 10px;white-space:nowrap}
+    .nav-item .badge{margin-left:6px}
+    #sidebarCategories{display:flex;gap:8px}
+    .kb-card{display:none}
+    .main{max-width:none;padding:16px 12px 28px}
+    .page-head{margin-bottom:14px}
+    .title{font-size:22px}
+    .switch{display:grid;grid-template-columns:1fr 1fr;width:100%;margin-bottom:14px}
+    .switch .s{justify-content:center;padding:9px 10px}
+    .card{padding:16px;border-radius:14px}
+    .input,.textarea,.chip-input{font-size:16px}
+    .textarea{min-height:220px}
+    .classify{padding:14px}
+    .classify .head{flex-wrap:wrap}
+    .classify .head .sub{margin-left:0;width:100%}
+    .chips{gap:8px}
+    .chip{padding:8px 12px}
+    .actions{
+      position:sticky;bottom:0;display:grid;grid-template-columns:1fr 1fr;
+      background:linear-gradient(180deg,rgba(251,246,241,0),var(--bg) 26%);
+      padding-top:18px;
+    }
+    .btn{justify-content:center;padding:12px 14px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">K</div>
+      <div>
+        <div class="name">KnowFlow</div>
+        <div class="tag">个人知识 Copilot</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">主导航</div>
+      <a class="nav-item" href="chat.html"><span class="icon">💬</span>AI 聊天</a>
+      <div class="nav-item active"><span class="icon">⬆️</span>导入新内容</div>
+      <a class="nav-item" href="library.html"><span class="icon">📚</span>知识库 <span id="navTotal" class="badge">--</span></a>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">分类</div>
+      <div id="sidebarCategories">
+        <div class="nav-item"><span class="icon">📁</span>全部 <span class="badge">--</span></div>
+      </div>
+    </div>
+
+    <div class="kb-card">
+      <div class="row"><span class="k">当前知识库</span><span id="kbTotal" class="v">-- 篇</span></div>
+      <div class="row"><span class="k">分类数</span><span id="kbCategories" class="v">--</span></div>
+      <div id="kbHint" class="hint">以本地数据库为准</div>
+    </div>
+  </aside>
+
+  <!-- 主体 -->
+  <main class="main">
+    <div class="page-head">
+      <div class="crumbs">首页 / <span>导入新内容</span></div>
+      <div class="title">把收藏带进 KnowFlow</div>
+      <div class="subtitle">先支持纯文本导入 · 粘贴后自动切分、入库并可问答</div>
+    </div>
+
+    <!-- 通道切换 -->
+    <div class="switch">
+      <div class="s">🔗 粘贴链接（小红书）</div>
+      <div class="s active">📝 粘贴纯文本</div>
+    </div>
+
+    <section class="card">
+      <h3>粘贴笔记内容</h3>
+      <div class="desc">MVP 阶段先跑通手动导入，链接解析后续作为增强能力接入</div>
+
+      <div class="label-row">
+        <span class="lbl">标题</span>
+        <span class="hint">可以直接用小红书笔记标题</span>
+      </div>
+      <input id="noteTitle" class="input" placeholder="粘贴或输入标题" />
+
+      <div class="label-row" style="margin-top:14px">
+        <span class="lbl">正文</span>
+        <span class="hint">保存后会自动建立检索索引</span>
+      </div>
+      <textarea id="noteBody" class="textarea" placeholder="把正文粘贴到这里。保存后会自动切分、入库并更新检索索引。"></textarea>
+
+      <div id="importStatus" class="parse-state info">
+        <span class="dot"></span>
+        待确认入库 · 当前内容会保存到本地知识库
+      </div>
+
+      <div class="classify">
+        <div class="head">
+          <span class="ai">自动识别</span>
+          <h4>分类</h4>
+          <span id="categoryHint" class="sub">可手动修改</span>
+        </div>
+        <div class="chips">
+          <div class="chip" data-category="美食">美食</div>
+          <div class="chip" data-category="旅行">旅行</div>
+          <div class="chip" data-category="护肤">护肤</div>
+          <div class="chip" data-category="学习">学习</div>
+          <div id="newCategoryBtn" class="chip new">＋ 新建分类</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="resetBtn" class="btn ghost">取消</button>
+        <button id="saveBtn" class="btn primary">确认入库 →</button>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="knowflow-static.js"></script>
+<script>
+  const titleInput = document.querySelector("#noteTitle");
+  const bodyInput = document.querySelector("#noteBody");
+  const saveBtn = document.querySelector("#saveBtn");
+  const resetBtn = document.querySelector("#resetBtn");
+  const statusBox = document.querySelector("#importStatus");
+  const categoryHint = document.querySelector("#categoryHint");
+  const newCategoryBtn = document.querySelector("#newCategoryBtn");
+  const sidebarCategories = document.querySelector("#sidebarCategories");
+  const navTotal = document.querySelector("#navTotal");
+  const kbTotal = document.querySelector("#kbTotal");
+  const kbCategories = document.querySelector("#kbCategories");
+  const kbHint = document.querySelector("#kbHint");
+  let selectedCategory = "";
+  let categoryTouched = false;
+  let saveMode = "save";
+
+  function setStatus(text, type = "info") {
+    statusBox.className = `parse-state ${type}`;
+    statusBox.innerHTML = `<span class="dot"></span>${text}`;
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function categoryIcon(category) {
+    const map = {"美食": "🍜", "旅行": "✈️", "旅游": "✈️", "学习": "📖", "护肤": "💄", "家居": "🏠", "未分类": "📄"};
+    return map[category] || "📄";
+  }
+
+  function libraryURL(category = "") {
+    return `library.html${category ? `?category=${encodeURIComponent(category)}` : ""}`;
+  }
+
+  function selectCategory(category, {manual = false} = {}) {
+    selectedCategory = category;
+    if (manual) categoryTouched = true;
+    document.querySelectorAll(".chip[data-category]").forEach((item) => {
+      item.classList.toggle("recommend", item.dataset.category === selectedCategory);
+    });
+    categoryHint.textContent = selectedCategory ? `${manual ? "已手动选择" : "自动识别"}：${selectedCategory}` : "可手动修改";
+  }
+
+  function inferCategoryFromText() {
+    if (categoryTouched) return;
+    const text = `${titleInput.value} ${bodyInput.value}`.toLowerCase();
+    if (!text.trim()) {
+      selectCategory("");
+      return;
+    }
+    const rules = [
+      ["旅行", ["旅行", "旅游", "攻略", "行程", "泰国", "曼谷", "普吉", "芭提雅", "京都", "大阪", "东京", "酒店"]],
+      ["美食", ["餐厅", "日料", "烤肉", "拉面", "人均", "必点", "菜", "咖啡"]],
+      ["护肤", ["护肤", "防晒", "精华", "面霜", "敏感肌"]],
+      ["学习", ["学习", "备考", "考试", "课程", "笔记", "复盘"]]
+    ];
+    const matched = rules.find(([, words]) => words.some((word) => text.includes(word)));
+    const category = matched ? matched[0] : "";
+    const exists = [...document.querySelectorAll(".chip[data-category]")].some((item) => item.dataset.category === category);
+    selectCategory(category && exists ? category : "");
+  }
+
+  function renderSidebarStats(notes) {
+    const counts = notes.reduce((acc, note) => {
+      const category = note.category || "未分类";
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+    const total = notes.length;
+    navTotal.textContent = total;
+    kbTotal.textContent = `${total} 篇`;
+    kbCategories.textContent = Object.keys(counts).length;
+    kbHint.textContent = total ? "已连接本地知识库" : "当前还没有入库内容";
+    sidebarCategories.innerHTML = [
+      `<div class="nav-item" data-category=""><span class="icon">📁</span>全部 <span class="badge">${total}</span></div>`,
+      ...Object.entries(counts).map(([category, count]) => `
+        <div class="nav-item" data-category="${escapeHTML(category)}"><span class="icon">${categoryIcon(category)}</span>${escapeHTML(category)} <span class="badge">${count}</span></div>
+      `)
+    ].join("");
+    sidebarCategories.querySelectorAll(".nav-item").forEach((item) => {
+      const category = item.dataset.category || "";
+      item.addEventListener("click", () => {
+        window.location.href = libraryURL(category);
+      });
+    });
+  }
+
+  async function loadSidebarStats() {
+    try {
+      renderSidebarStats(KnowFlowStore.listNotes());
+    } catch (error) {
+      kbHint.textContent = "暂时无法读取数据库";
+    }
+  }
+
+  function wireCategoryChip(chip) {
+    chip.addEventListener("click", () => {
+      selectCategory(chip.dataset.category, {manual: true});
+    });
+    const remove = document.createElement("button");
+    remove.className = "remove";
+    remove.type = "button";
+    remove.textContent = "×";
+    remove.title = "删除分类";
+    remove.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (selectedCategory === chip.dataset.category) {
+        selectedCategory = "";
+        categoryTouched = false;
+        categoryHint.textContent = "可手动修改";
+      }
+      chip.remove();
+    });
+    chip.appendChild(remove);
+  }
+
+  document.querySelectorAll(".chip[data-category]").forEach(wireCategoryChip);
+
+  [titleInput, bodyInput].forEach((input) => input.addEventListener("input", inferCategoryFromText));
+
+  function addCategoryChip(category) {
+    let chip = [...document.querySelectorAll(".chip[data-category]")].find((item) => item.dataset.category === category);
+    if (!chip) {
+      chip = document.createElement("div");
+      chip.className = "chip";
+      chip.dataset.category = category;
+      chip.textContent = category;
+      wireCategoryChip(chip);
+      newCategoryBtn.before(chip);
+    }
+    selectCategory(category, {manual: true});
+  }
+
+  newCategoryBtn.addEventListener("click", () => {
+    const input = document.createElement("input");
+    input.className = "chip-input";
+    input.placeholder = "输入分类";
+    newCategoryBtn.replaceWith(input);
+    input.focus();
+
+    let finished = false;
+    const restoreButton = () => input.replaceWith(newCategoryBtn);
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      const category = input.value.trim();
+      restoreButton();
+      if (category) addCategoryChip(category);
+    };
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") finish();
+      if (event.key === "Escape") {
+        finished = true;
+        restoreButton();
+      }
+    });
+    input.addEventListener("blur", finish);
+  });
+
+  function resetForm() {
+    titleInput.value = "";
+    bodyInput.value = "";
+    selectedCategory = "";
+    categoryTouched = false;
+    selectCategory("");
+    saveMode = "save";
+    saveBtn.disabled = false;
+    saveBtn.textContent = "确认入库 →";
+    resetBtn.textContent = "取消";
+    setStatus("待确认入库 · 当前内容会保存到本地知识库", "info");
+  }
+
+  resetBtn.addEventListener("click", () => {
+    if (saveMode === "success") {
+      window.location.href = "chat.html";
+      return;
+    }
+    resetForm();
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    if (saveMode === "success") {
+      resetForm();
+      titleInput.focus();
+      return;
+    }
+
+    const title = titleInput.value.trim();
+    const body = bodyInput.value.trim();
+    if (!body) {
+      setStatus("请先粘贴笔记正文", "error");
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "正在入库...";
+    setStatus("正在保存并切分笔记...", "info");
+
+    try {
+      KnowFlowStore.createNote({title, body, category: selectedCategory});
+
+      setStatus("导入成功 · 已更新本地检索索引", "info");
+      loadSidebarStats();
+      saveMode = "success";
+      saveBtn.disabled = false;
+      saveBtn.textContent = "继续添加 →";
+      resetBtn.textContent = "去提问";
+    } catch (error) {
+      setStatus(error.message || "导入失败，请确认后端服务已启动", "error");
+      saveMode = "save";
+      saveBtn.disabled = false;
+      saveBtn.textContent = "确认入库 →";
+      resetBtn.textContent = "取消";
+    }
+  });
+
+  loadSidebarStats();
+</script>
+</body>
+</html>

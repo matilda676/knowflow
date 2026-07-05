@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>KnowFlow · AI 聊天</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#fbf6f1;
+    --bg-soft:#f3ece2;
+    --card:#ffffff;
+    --ink:#231815;
+    --ink-soft:#6b5d57;
+    --ink-faint:#a59a93;
+    --line:#ece2d3;
+    --line-soft:#f3ece2;
+    --primary:#ff5a3c;
+    --primary-soft:#ffe2d9;
+    --primary-ink:#c8341a;
+    --accent:#ffb86b;
+    --green:#3aa97a;
+    --green-soft:#e3f4ec;
+    --blue:#4f7cff;
+    --blue-soft:#e3ebff;
+    --shadow:0 8px 30px rgba(60,30,20,.06);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  input,textarea{font-family:inherit;color:inherit}
+
+  /* 布局 */
+  .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  .sidebar{
+    background:linear-gradient(180deg,#fff 0%,#fff7f1 100%);
+    border-right:1px solid var(--line);
+    padding:24px 18px;
+    position:sticky;top:0;height:100vh;
+    display:flex;flex-direction:column;gap:18px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 6px}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff7a4d,#ff4d2e);display:grid;place-items:center;color:#fff;font-weight:700;box-shadow:0 6px 16px rgba(255,90,60,.35)}
+  .brand .name{font-size:16px;font-weight:700;letter-spacing:.3px}
+  .brand .tag{font-size:11px;color:var(--ink-faint)}
+
+  .nav-section .label{font-size:11px;color:var(--ink-faint);padding:10px 8px 6px;letter-spacing:.5px}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 10px;border-radius:10px;color:var(--ink-soft);
+    font-size:13.5px;cursor:pointer;transition:.15s;
+  }
+  .nav-item:hover{background:var(--bg-soft);color:var(--ink)}
+  .nav-item.active{background:linear-gradient(135deg,#fff1ec,#ffe2d9);color:var(--primary-ink);font-weight:600}
+  .nav-item .icon{width:18px;height:18px;display:grid;place-items:center}
+  .nav-item .badge{margin-left:auto;font-size:11px;background:#fff;border:1px solid var(--line);padding:2px 7px;border-radius:999px;color:var(--ink-soft)}
+
+  .kb-card{
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:auto;
+  }
+  .kb-card .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .kb-card .row .k{font-size:12px;color:var(--ink-soft)}
+  .kb-card .row .v{font-size:13px;font-weight:600}
+  .progress{height:6px;background:var(--bg-soft);border-radius:99px;overflow:hidden;margin-top:6px}
+  .progress > span{display:block;height:100%;background:linear-gradient(90deg,#ffb86b,#ff5a3c);border-radius:99px}
+  .kb-card .hint{font-size:11.5px;color:var(--ink-faint);margin-top:8px}
+
+  /* 主体 */
+  .main{display:flex;flex-direction:column;height:100vh;min-width:0}
+
+  .chat-head{
+    padding:18px 32px;border-bottom:1px solid var(--line);background:#fff;
+    display:flex;align-items:center;gap:14px;
+  }
+  .chat-head h1{font-size:17px;font-weight:700}
+  .chat-head .scope{
+    font-size:12px;background:var(--primary-soft);color:var(--primary-ink);
+    padding:4px 10px;border-radius:99px;font-weight:600;
+  }
+  .chat-head .scope::before{content:"🔍 "}
+  .chat-head .actions{margin-left:auto;display:flex;gap:6px}
+  .chat-head .actions .b{
+    padding:7px 12px;font-size:12.5px;border-radius:9px;background:var(--bg-soft);color:var(--ink-soft);
+    display:flex;align-items:center;gap:5px;cursor:pointer;transition:.15s;
+  }
+  .chat-head .actions .b:hover{background:var(--primary-soft);color:var(--primary-ink)}
+
+  /* 对话区 */
+  .chat-area{flex:1;overflow-y:auto;padding:28px 32px 12px}
+  .chat-area::-webkit-scrollbar{width:6px}
+  .chat-area::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+
+  .msg-row{display:flex;gap:12px;margin-bottom:24px;align-items:flex-start}
+  .msg-row.user{flex-direction:row-reverse}
+  .avatar{
+    width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;
+    font-size:13px;font-weight:700;color:#fff;
+  }
+  .avatar.ai{background:linear-gradient(135deg,#ff7a4d,#ff4d2e);box-shadow:0 4px 10px rgba(255,90,60,.25)}
+  .avatar.user{background:linear-gradient(135deg,#a59a93,#6b5d57)}
+  .bubble{
+    max-width:680px;background:#fff;border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;font-size:14px;line-height:1.7;color:var(--ink);
+    box-shadow:var(--shadow);
+  }
+  .msg-row.user .bubble{background:linear-gradient(135deg,#fff1ec,#ffe2d9);border-color:#ffd0c2}
+  .bubble p{margin-bottom:8px}
+  .bubble p:last-child{margin-bottom:0}
+
+  /* 引用卡片 */
+  .cite{
+    margin-top:12px;padding:12px 14px;background:#fff7f2;border:1px solid #ffd0c2;
+    border-radius:10px;display:flex;flex-direction:column;gap:8px;
+  }
+  .cite-head{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--primary-ink);font-weight:600}
+  .cite-head::before{content:"📎";font-size:12px}
+  .cite-item{
+    display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+    padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:8px;
+    cursor:pointer;transition:.15s;
+  }
+  .cite-item:hover{border-color:#ffc1ad;background:#fffaf3}
+  .cite-item .n{
+    width:22px;height:22px;border-radius:6px;background:var(--primary-soft);
+    color:var(--primary-ink);display:grid;place-items:center;font-size:11px;font-weight:700;
+  }
+  .cite-item .t{font-size:12.5px;font-weight:600;line-height:1.4}
+  .cite-item .m{font-size:10.5px;color:var(--ink-faint)}
+  .cite-item .go{
+    font-size:10.5px;background:var(--bg-soft);color:var(--ink-soft);
+    padding:3px 7px;border-radius:5px;display:flex;align-items:center;gap:3px;
+  }
+  .cite-item .go:hover{background:var(--primary-soft);color:var(--primary-ink)}
+
+  /* 提问建议 */
+  .suggest-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+  .suggest{
+    padding:10px 12px;background:#fff;border:1.5px solid var(--line);border-radius:10px;
+    font-size:12.5px;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;gap:8px;
+    transition:.15s;
+  }
+  .suggest:hover{border-color:#ffc1ad;color:var(--primary-ink);background:#fff7f2}
+  .suggest::before{content:"💡";font-size:11px}
+
+  /* 输入区 */
+  .composer{
+    padding:14px 32px 24px;background:#fff;border-top:1px solid var(--line);
+  }
+  .composer-box{
+    background:#fffaf3;border:1.5px solid var(--line);border-radius:16px;
+    padding:12px 14px;display:flex;flex-direction:column;gap:10px;
+    box-shadow:0 4px 20px rgba(60,30,20,.04);
+  }
+  .composer-box:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,90,60,.1),0 4px 20px rgba(60,30,20,.04)}
+  .composer-box textarea{
+    width:100%;border:none;outline:none;background:transparent;resize:none;
+    font-size:14px;line-height:1.6;min-height:42px;max-height:160px;
+  }
+  .composer-box .row{display:flex;align-items:center;gap:6px}
+  .composer-box .scope-mini{
+    font-size:11.5px;background:var(--bg-soft);color:var(--ink-soft);
+    padding:4px 10px;border-radius:99px;display:flex;align-items:center;gap:4px;
+  }
+  .composer-box .scope-mini b{color:var(--ink);font-weight:600}
+  .composer-box .send{
+    margin-left:auto;width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(135deg,#ff7a4d,#ff4d2e);color:#fff;
+    display:grid;place-items:center;font-size:15px;box-shadow:0 6px 14px rgba(255,90,60,.3);
+  }
+  .composer-box .send:hover{transform:translateY(-1px)}
+  .composer-box .send:disabled{opacity:.55;cursor:not-allowed;transform:none}
+  .composer-hint{font-size:11px;color:var(--ink-faint);margin-top:6px;text-align:center}
+  .composer-hint kbd{font-size:10.5px;background:var(--bg-soft);padding:1px 5px;border-radius:4px;color:var(--ink-soft)}
+  .empty-state{color:var(--ink-soft)}
+  .empty-state b{color:var(--primary-ink)}
+
+  /* AI 正在打字 */
+  .typing{display:flex;gap:4px;align-items:center;padding:4px 0}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--ink-faint);animation:blink 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}
+  .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+
+  @media (max-width:760px){
+    html,body{font-size:14px}
+    .app{display:block;min-height:100vh}
+    .sidebar{
+      position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);
+      padding:14px 12px;gap:10px;
+    }
+    .brand{padding:0 4px}
+    .nav-section .label{display:none}
+    .nav-section{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+    .nav-section::-webkit-scrollbar{display:none}
+    .nav-item{flex:0 0 auto;padding:8px 10px;white-space:nowrap}
+    .nav-item .badge{margin-left:6px}
+    #sidebarCategories{display:flex;gap:8px}
+    .kb-card{display:none}
+    .main{height:auto;min-height:100vh}
+    .chat-head{position:static;flex-wrap:wrap;gap:10px;padding:14px 12px}
+    .chat-head h1{font-size:20px}
+    .chat-head .scope{order:3;width:100%;font-size:12px}
+    .chat-head .actions{margin-left:0}
+    .chat-head .actions .b{padding:7px 10px}
+    .chat-area{min-height:calc(100vh - 300px);padding:16px 12px 10px}
+    .msg-row{gap:8px;margin-bottom:14px}
+    .avatar{width:34px;height:34px;flex:0 0 34px}
+    .bubble{max-width:calc(100vw - 70px);padding:12px 14px;border-radius:14px}
+    .msg-row.user .bubble{max-width:calc(100vw - 82px)}
+    .cite{padding:10px;margin-top:10px}
+    .cite-item{grid-template-columns:24px 1fr auto;gap:8px;padding:8px}
+    .suggest-grid{grid-template-columns:1fr}
+    .composer{position:sticky;bottom:0;padding:10px 12px;background:rgba(255,255,255,.96)}
+    .composer-box{border-radius:16px;padding:10px}
+    .composer-box textarea{font-size:16px;min-height:58px}
+    .composer-box .row{gap:8px;flex-wrap:wrap}
+    .composer-box .send{width:44px;height:44px}
+    .composer-hint{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">K</div>
+      <div>
+        <div class="name">KnowFlow</div>
+        <div class="tag">个人知识 Copilot</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">主导航</div>
+      <div class="nav-item active"><span class="icon">💬</span>AI 聊天</div>
+      <a class="nav-item" href="import.html"><span class="icon">⬆️</span>导入新内容</a>
+      <a class="nav-item" href="library.html"><span class="icon">📚</span>知识库 <span id="navTotal" class="badge">--</span></a>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">分类</div>
+      <div id="sidebarCategories">
+        <div class="nav-item"><span class="icon">📁</span>全部 <span class="badge">--</span></div>
+      </div>
+    </div>
+
+    <div class="kb-card">
+      <div class="row"><span class="k">知识库</span><span id="kbTotal" class="v">-- 篇</span></div>
+      <div class="row"><span class="k">分类数</span><span id="kbCategories" class="v">--</span></div>
+      <div class="hint">以本地数据库为准</div>
+    </div>
+  </aside>
+
+  <!-- 主体 -->
+  <main class="main">
+    <div class="chat-head">
+      <h1>AI 聊天</h1>
+      <span class="scope">当前范围：全部知识库</span>
+      <div class="actions">
+        <button id="newChatBtn" class="b">🆕 新对话</button>
+        <button id="historyBtn" class="b">🕘 历史</button>
+      </div>
+    </div>
+
+    <div id="chatArea" class="chat-area">
+      <!-- AI 回答 -->
+      <div style="display:none">
+      <div class="msg-row">
+        <div class="avatar ai">K</div>
+        <div class="bubble">
+          <p>我帮你搜了 <b>8 篇</b> 美食笔记，提炼出 3 个高频出现的"必点菜"——</p>
+          <p>这些菜都被多位博主在不同的上海日料店推荐过，可以作为选店时的参考维度。</p>
+
+          <div class="cite">
+            <div class="cite-head">引用来源（点击查看详情）</div>
+
+            <div class="cite-item">
+              <div class="n">1</div>
+              <div>
+                <div class="t">上海宝藏日料店｜藏在愚园路的深夜食堂</div>
+                <div class="m">美食 · 探店 · 2026-07-03</div>
+              </div>
+              <div class="go">查看 →</div>
+            </div>
+
+            <div class="cite-item">
+              <div class="n">2</div>
+              <div>
+                <div class="t">静安寺附近 5 家值得回购的深夜日料</div>
+                <div class="m">美食 · 探店 · 2026-06-28</div>
+              </div>
+              <div class="go">查看 →</div>
+            </div>
+
+            <div class="cite-item">
+              <div class="n">3</div>
+              <div>
+                <div class="t">手作玉子烧为什么值得等 15 分钟？</div>
+                <div class="m">美食 · 食谱 · 2026-06-20</div>
+              </div>
+              <div class="go">查看 →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 用户追问 -->
+      <div class="msg-row user">
+        <div class="avatar user">U</div>
+        <div class="bubble">
+          <p>那人均 ¥150 怎么点最划算？</p>
+        </div>
+      </div>
+
+      <!-- AI 追问回答 -->
+      <div class="msg-row">
+        <div class="avatar ai">K</div>
+        <div class="bubble">
+          <p>按 <b>¥150 / 人</b> 的预算，建议这样点：</p>
+          <p>① <b>主菜选 1 样必点</b>（味噌烤银鳕鱼 / 柚子盐拉面，二选一）<br>
+             ② <b>加 1 个小食</b>（玉子烧或炸鸡软骨）<br>
+             ③ <b>避开 2 样贵价</b>：刺身拼盘、和牛寿司</p>
+          <p>3 篇笔记里都提到这家的玉子烧需要等 15 分钟，<b>建议入座就先点</b>，和主菜同步上桌。</p>
+        </div>
+      </div>
+
+      <!-- 建议追问 -->
+      <div class="msg-row">
+        <div class="avatar ai">K</div>
+        <div class="bubble" style="background:#fffaf3;border-style:dashed">
+          <div style="font-size:12px;color:var(--ink-soft);margin-bottom:6px">你可以接着问：</div>
+          <div class="suggest-grid">
+            <div class="suggest">附近 500 米还有哪些日料店？</div>
+            <div class="suggest">如果预算提到 ¥300 怎么吃？</div>
+            <div class="suggest">对比一下"静安寺"vs"愚园路"两个商圈</div>
+            <div class="suggest">整理成 1 张探店清单</div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- 输入区 -->
+    <div class="composer">
+      <div class="composer-box">
+        <textarea id="messageInput" placeholder="问点什么…  试试「愚园路日料店人均多少」或「我收藏的 AI 笔记里关于 RAG 的观点」"></textarea>
+        <div class="row">
+          <span class="scope-mini">🔍 范围：<b>全部</b></span>
+          <span id="retrievalStatus" class="scope-mini">📚 等待提问</span>
+          <button id="sendBtn" class="send">↑</button>
+        </div>
+      </div>
+      <div id="composerHint" class="composer-hint">基于本地知识库回答 · <kbd>Enter</kbd> 发送 · <kbd>Shift + Enter</kbd> 换行</div>
+    </div>
+  </main>
+</div>
+<script src="knowflow-static.js"></script>
+<script>
+  const chatArea = document.querySelector("#chatArea");
+  const messageInput = document.querySelector("#messageInput");
+  const sendBtn = document.querySelector("#sendBtn");
+  const retrievalStatus = document.querySelector("#retrievalStatus");
+  const composerHint = document.querySelector("#composerHint");
+  const newChatBtn = document.querySelector("#newChatBtn");
+  const historyBtn = document.querySelector("#historyBtn");
+
+  function escapeHTML(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function formatAnswer(text) {
+    return escapeHTML(text)
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => `<p>${line}</p>`)
+      .join("");
+  }
+
+  function categoryIcon(category) {
+    const map = {"美食": "🍜", "旅行": "✈️", "旅游": "✈️", "学习": "📖", "护肤": "💄", "家居": "🏠", "未分类": "📄"};
+    return map[category] || "📄";
+  }
+
+  function libraryURL(category = "") {
+    return `library.html${category ? `?category=${encodeURIComponent(category)}` : ""}`;
+  }
+
+  function renderSidebarStats(notes) {
+    const counts = notes.reduce((acc, note) => {
+      const category = note.category || "未分类";
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+    const total = notes.length;
+    document.querySelector("#navTotal").textContent = total;
+    document.querySelector("#kbTotal").textContent = `${total} 篇`;
+    document.querySelector("#kbCategories").textContent = Object.keys(counts).length;
+    composerHint.innerHTML = `基于你的 ${total} 篇本地笔记回答 · <kbd>Enter</kbd> 发送 · <kbd>Shift + Enter</kbd> 换行`;
+    document.querySelector("#sidebarCategories").innerHTML = [
+      `<div class="nav-item" data-category=""><span class="icon">📁</span>全部 <span class="badge">${total}</span></div>`,
+      ...Object.entries(counts).map(([category, count]) => `
+        <div class="nav-item" data-category="${escapeHTML(category)}"><span class="icon">${categoryIcon(category)}</span>${escapeHTML(category)} <span class="badge">${count}</span></div>
+      `)
+    ].join("");
+    document.querySelectorAll("#sidebarCategories .nav-item").forEach((item) => {
+      const category = item.dataset.category || "";
+      item.addEventListener("click", () => {
+        window.location.href = libraryURL(category);
+      });
+    });
+  }
+
+  async function loadSidebarStats() {
+    try {
+      renderSidebarStats(KnowFlowStore.listNotes());
+    } catch (error) {}
+  }
+
+  function scrollToBottom() {
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  function appendUserMessage(text) {
+    chatArea.insertAdjacentHTML("beforeend", `
+      <div class="msg-row user">
+        <div class="avatar user">U</div>
+        <div class="bubble"><p>${escapeHTML(text)}</p></div>
+      </div>
+    `);
+    scrollToBottom();
+  }
+
+  function appendTyping() {
+    const id = `typing-${Date.now()}`;
+    chatArea.insertAdjacentHTML("beforeend", `
+      <div id="${id}" class="msg-row">
+        <div class="avatar ai">K</div>
+        <div class="bubble">
+          <div class="typing"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    `);
+    scrollToBottom();
+    return id;
+  }
+
+  function citationHTML(citations) {
+    if (!citations || citations.length === 0) return "";
+    const items = citations.map((item) => `
+      <div class="cite-item" onclick="window.location.href='detail.html?note_id=${item.note_id}'">
+        <div class="n">${item.number}</div>
+        <div>
+          <div class="t">${escapeHTML(item.title)}</div>
+          <div class="m">${escapeHTML(item.category)} · 原笔记</div>
+        </div>
+        <div class="go">查看 →</div>
+      </div>
+    `).join("");
+    return `
+      <div class="cite">
+        <div class="cite-head">引用来源（点击查看详情）</div>
+        ${items}
+      </div>
+    `;
+  }
+
+  function appendAIMessage(answer, citations) {
+    chatArea.insertAdjacentHTML("beforeend", `
+      <div class="msg-row">
+        <div class="avatar ai">K</div>
+        <div class="bubble">
+          ${formatAnswer(answer)}
+          ${citationHTML(citations)}
+        </div>
+      </div>
+    `);
+    scrollToBottom();
+  }
+
+  function resetConversation() {
+    chatArea.innerHTML = "";
+    messageInput.value = "";
+    retrievalStatus.textContent = "📚 等待提问";
+    messageInput.focus();
+  }
+
+  function showHistoryState() {
+    appendAIMessage("当前版本先保留本次页面里的对话。完整历史记录还没有接入数据库，后续会和新对话一起保存。", []);
+    retrievalStatus.textContent = "📚 历史暂未接入";
+  }
+
+  async function sendMessage() {
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    appendUserMessage(message);
+    messageInput.value = "";
+    sendBtn.disabled = true;
+    retrievalStatus.textContent = "📚 检索中";
+    const typingId = appendTyping();
+
+    try {
+      const data = KnowFlowStore.chat(message);
+      document.querySelector(`#${typingId}`)?.remove();
+      appendAIMessage(data.answer, data.citations);
+      retrievalStatus.textContent = `📚 引用 ${data.citations.length} 条`;
+    } catch (error) {
+      document.querySelector(`#${typingId}`)?.remove();
+      appendAIMessage(error.message || "请求失败，请确认后端服务已启动。", []);
+      retrievalStatus.textContent = "📚 请求失败";
+    } finally {
+      sendBtn.disabled = false;
+      messageInput.focus();
+    }
+  }
+
+  sendBtn.addEventListener("click", sendMessage);
+  newChatBtn.addEventListener("click", resetConversation);
+  historyBtn.addEventListener("click", showHistoryState);
+  messageInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
+  });
+  loadSidebarStats();
+</script>
+</body>
+</html>
